@@ -11,11 +11,13 @@ const EMAIL_CONSENT_COPY = "I would like occasional practical updates from SHIFT
 
 export function ShiftReadyLeadForm() {
   const firstNameId = useId();
+  const shiftTypeId = useId();
   const emailId = useId();
   const consentId = useId();
   const messageId = useId();
   const successHeadingRef = useRef<HTMLHeadingElement>(null);
   const [firstName, setFirstName] = useState("");
+  const [shiftType, setShiftType] = useState("12-Hour Shifts");
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<FormStatus>("idle");
@@ -55,8 +57,8 @@ export function ShiftReadyLeadForm() {
         first_name: cleanName,
         contact_stage: "lead",
         source: "shift_ready_guide",
-        tags: ["shift-ready-guide", "lead-magnet"],
-        append_notes: `Requested "${GUIDE_TITLE}". Consent: "${EMAIL_CONSENT_COPY}"`,
+        tags: ["shift-ready-guide", "lead-magnet", shiftType.toLowerCase().replace(/[^a-z0-9]+/g, "-")],
+        append_notes: `Requested "${GUIDE_TITLE}". Shift Type: ${shiftType}. Consent: "${EMAIL_CONSENT_COPY}"`,
       });
 
       await events({
@@ -64,6 +66,7 @@ export function ShiftReadyLeadForm() {
         contact_email: cleanEmail,
         properties: {
           first_name: cleanName,
+          shift_type: shiftType,
           guide_title: GUIDE_TITLE,
           guide_url: PUBLIC_GUIDE_URL,
           email_opt_in: true,
@@ -72,7 +75,7 @@ export function ShiftReadyLeadForm() {
         source: "shift_plus_web",
         source_event_id: `shift_ready_guide_requested:${cleanEmail}`,
       });
-      trackEvent("shift_ready_guide_requested", { entry_point: "shift_ready", destination: "guide_page" });
+      trackEvent("shift_ready_guide_requested", { entry_point: "shift_ready", destination: "guide_page", shift_type: shiftType });
       setStatus("success");
     } catch {
       setStatus("error");
@@ -145,6 +148,25 @@ export function ShiftReadyLeadForm() {
             className="mt-1.5 w-full rounded-md border border-white/15 bg-navy px-3.5 py-3 text-base text-cream placeholder:text-cream/30 focus:border-safety focus:outline-none focus:ring-2 focus:ring-safety/30 disabled:cursor-wait disabled:opacity-60"
           />
         </div>
+
+        <div>
+          <label htmlFor={shiftTypeId} className="text-sm font-semibold text-cream">Primary shift type</label>
+          <select
+            id={shiftTypeId}
+            name="shiftType"
+            value={shiftType}
+            onChange={(event) => setShiftType(event.target.value)}
+            disabled={submitting}
+            className="mt-1.5 w-full rounded-md border border-white/15 bg-navy px-3.5 py-3 text-base text-cream focus:border-safety focus:outline-none focus:ring-2 focus:ring-safety/30 disabled:cursor-wait disabled:opacity-60"
+          >
+            <option value="12-Hour Shifts" className="bg-navy text-cream">12-Hour Shifts</option>
+            <option value="Rotating Days/Nights" className="bg-navy text-cream">Rotating Days/Nights</option>
+            <option value="24/48 First Responder" className="bg-navy text-cream">24/48 First Responder</option>
+            <option value="Fixed Night Shift" className="bg-navy text-cream">Fixed Night Shift</option>
+            <option value="Unpredictable / On-Call" className="bg-navy text-cream">Unpredictable / On-Call</option>
+          </select>
+        </div>
+
         <div>
           <label htmlFor={emailId} className="text-sm font-semibold text-cream">Email address</label>
           <input
@@ -161,6 +183,7 @@ export function ShiftReadyLeadForm() {
             className="mt-1.5 w-full rounded-md border border-white/15 bg-navy px-3.5 py-3 text-base text-cream placeholder:text-cream/30 focus:border-safety focus:outline-none focus:ring-2 focus:ring-safety/30 disabled:cursor-wait disabled:opacity-60"
           />
         </div>
+
         <label htmlFor={consentId} className="flex cursor-pointer items-start gap-3 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm leading-relaxed text-cream/70">
           <input
             id={consentId}
@@ -174,11 +197,13 @@ export function ShiftReadyLeadForm() {
           />
           <span>{EMAIL_CONSENT_COPY}</span>
         </label>
+
         {message && (
           <p id={messageId} role="alert" aria-live="polite" className="rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2.5 text-sm leading-relaxed text-red-100">
             {message}
           </p>
         )}
+
         <button
           type="submit"
           disabled={submitting}
@@ -187,6 +212,7 @@ export function ShiftReadyLeadForm() {
           {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
           {submitting ? "Saving my request" : "Get my free guide"}
         </button>
+
         <p className="text-center text-xs leading-relaxed text-cream/45">
           Your email stays with SHIFT+. The guide opens here after submission, and your request is saved.
         </p>
